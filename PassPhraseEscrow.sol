@@ -6,12 +6,6 @@ pragma solidity 0.8.25;
 
 contract PassPhraseEscrow {
 
-
-    // struct Data {
-    //     bytes32 hashedPassPhrase;
-    //     uint256 amount;
-    // }
-
     mapping(bytes32 => uint256) public amountMapping;
 
     function depositEth(
@@ -22,8 +16,6 @@ contract PassPhraseEscrow {
 
     // user => hashedPassPhrase
     mapping(address => bytes) public whitelistMap;
-
-    // sign -> passPhrase
 
     function firstTxn(
         bytes memory _signature
@@ -43,24 +35,26 @@ contract PassPhraseEscrow {
         address signer = ecrecover(messageHash, v, r, s);
 
         if(signer != msg.sender) {
-            revert();
+            revert("INVALID_SIGNER");
         }
 
         bytes32 computedHashedPhrase = keccak256(abi.encodePacked(_passPhrase));
-        if(amountMapping[computedHashedPhrase] > 0) {
+        uint256 ethVal = amountMapping[computedHashedPhrase];
+        if(ethVal > 0) {
             amountMapping[computedHashedPhrase] = 0;
-            (bool success, ) = msg.sender.call{ value: amountMapping[computedHashedPhrase] }("");
+            (bool success, ) = msg.sender.call{ value: ethVal }("");
             if(!success)
-                revert();
+                revert("SEND_ETH_FAILED");
         }
         else 
-            revert();
+            revert("ZERO_ETH_VALUE");
     }
 
-    function getHash(
-        string memory str
+    function getDigestHash(
+        string memory _passPhrase
     ) external pure returns (bytes32) {
-        return keccak256(abi.encodePacked(str));
+        bytes32 digest = keccak256(abi.encodePacked(_passPhrase));
+        return digest;
     }
 
     function splitSignature(bytes memory sig)
@@ -89,20 +83,5 @@ contract PassPhraseEscrow {
         }
 
         // implicitly return (r, s, v)
-    }
-
-    //sign - passPhrase, msg.sender
-    function withdrawEth(
-        string memory _passPhrase
-    ) external {
-        bytes32 computedHashedPhrase = keccak256(abi.encodePacked(_passPhrase));
-        if(amountMapping[computedHashedPhrase] > 0) {
-            amountMapping[computedHashedPhrase] = 0;
-            (bool success, ) = msg.sender.call{ value: amountMapping[computedHashedPhrase] }("");
-            if(!success)
-                revert();
-        }
-        else 
-            revert();
     }
 }
