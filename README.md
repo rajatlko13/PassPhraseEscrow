@@ -1,5 +1,7 @@
 <h1>Test Flow</h1>
 
+Deployment and testing can be performed on the remix platform.
+
 Once the contract is deployed, perform these steps -
 
 1. Call function getDigestHash() with passphrase param - "hey". It will return the hashed paraphrase.
